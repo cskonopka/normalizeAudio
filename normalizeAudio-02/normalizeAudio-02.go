@@ -1,17 +1,30 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
 func main() {
-	inputFile := "dafoe.wav"
-	outputFile := "newOutput.wav"
 
+	getWavs := GetFiles()
+
+	numofFiles := len(getWavs)
+	fmt.Println(numofFiles)
+
+	for i := 0; i < numofFiles; i++ {
+		fmt.Println("File Location : ", getWavs[i])
+		findVol := FindVolume(getWavs[i])
+		fmt.Println("Max Volume : ", findVol)
+	}
+}
+
+func FindVolume(inputFile string) string {
 	cmd := exec.Command("ffmpeg", "-i", inputFile, "-af", "volumedetect", "-f", "null", "-y", "nul")
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -29,12 +42,35 @@ func main() {
 
 	removedDB := currentVol[1:5]
 	normalizedVol := "volume=" + removedDB
+	// fmt.Println(normalizedVol)
+	return normalizedVol
+}
 
-	cmd2 := exec.Command("ffmpeg", "-i", inputFile, "-filter:a", normalizedVol, outputFile)
-	err = cmd2.Start()
+func GetFiles() []string {
+
+	var files []string
+
+	dir, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	// fmt.Println(dir)
+
+	root := string(dir)
+	err2 := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".wav" {
+			files = append(files, path)
+		}
+		// files = append(files, path)
+		return nil
+	})
+	if err2 != nil {
+		panic(err2)
+	}
+	// for _, file := range files {
+	// 	fmt.Println(file)
+	// }
+	return files
 }
 
 func BytesToString(data []byte) string {
