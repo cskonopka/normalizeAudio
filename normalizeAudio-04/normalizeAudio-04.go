@@ -33,11 +33,6 @@ func ConverionRoutine(in <-chan []string, out chan<- []string) {
 
 	arraySize := len(files)
 
-	// cmd := exec.Command("ffmpeg", "-i", inputFile, "-filter:a", normalizedVol, outputFile)
-	// if err := cmd2.Start(); err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	for i := 0; i < arraySize; i++ {
 		fmt.Println("lot lot : " + files[i])
 		findVol := FindVolume(files[i])
@@ -45,7 +40,6 @@ func ConverionRoutine(in <-chan []string, out chan<- []string) {
 		NormalizeFile(files[i], iterateOutput, findVol)
 		fmt.Println("Max Volume : ", findVol)
 	}
-
 	out <- files
 }
 
@@ -77,6 +71,7 @@ func NormalizeFile(inputFile, outputFile, normalizedVol string) {
 	if err := cmd2.Start(); err != nil {
 		log.Fatal(err)
 	}
+
 }
 
 func GetFiles() []string {
