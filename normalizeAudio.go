@@ -10,11 +10,18 @@ import (
 )
 
 func main() {
-	getWavs, arraySize, dir := GetFiles()
+	// User-provided directory
+	dir := os.Args[1]
+
+	/*
+		getWavs -> All of the .wav files in directory
+		arraySize -> Number of .wav files in directory
+	*/
+	getWavs, arraySize := GetFiles(dir)
 
 	// Iterate
 	for i := 0; i < arraySize; i++ {
-		// Find the volume of the file
+		// Find the volume of the  file
 		findVol := FindVolume(getWavs[i])
 
 		// Isolate filenames from directory
@@ -24,29 +31,23 @@ func main() {
 		filename := splitFilename[1][:len(splitFilename[1])-4]
 
 		// Normalized output filename
-		normalizedOutput := filename + "-normalized.wav"
+		normalizedOutput := dir + "/" + filename + "-normalized.wav"
 
-		/* Normalize the file
-		files[i]: the current audio file
-		normalizedOutput: the filename of the normalized file
-		findVol: The dB peak of the current audio file
+		/* Normalize and create a normalized .wav file
+		files[i] -> the current audio file
+		normalizedOutput -> the filename of the normalized file
+		findVol -> The dB peak of the current audio file
 		*/
 		NormalizeFile(getWavs[i], normalizedOutput, findVol)
 	}
 }
 
-func GetFiles() ([]string, int, string) {
+func GetFiles(dir string) ([]string, int) {
 	// String array for files
 	var files []string
 
-	// Get the current directory
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Filewalk the directory
-	err2 := filepath.Walk(string(dir), func(path string, info os.FileInfo, err error) error {
+	err2 := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".wav" {
 			// Append file paths to the file string array
 			files = append(files, path)
@@ -56,11 +57,9 @@ func GetFiles() ([]string, int, string) {
 	if err2 != nil {
 		panic(err2)
 	}
-
 	arraySize := len(files)
-
 	// return a string array of files in the directory
-	return files, arraySize, dir
+	return files, arraySize
 }
 
 func RemoveHeader(s string) string {
@@ -71,7 +70,6 @@ func RemoveHeader(s string) string {
 }
 
 func FindVolume(inputFile string) string {
-
 	// Get the peak of the audio file using 'volumedetect'
 	cmd := exec.Command("ffmpeg", "-i", inputFile, "-af", "volumedetect", "-f", "null", "-y", "nul")
 
@@ -110,7 +108,6 @@ func FindVolume(inputFile string) string {
 
 func NormalizeFile(inputFile, outputFile, normalizedVol string) {
 	cmd2 := exec.Command("ffmpeg", "-i", inputFile, "-filter:a", normalizedVol, outputFile)
-	// err = cmd2.Start()
 	if err := cmd2.Start(); err != nil {
 		log.Fatal(err)
 	}
